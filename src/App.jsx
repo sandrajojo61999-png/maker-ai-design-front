@@ -1,10 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
+const DEFAULT_PARAMS = { grid_x: 1, grid_y: 1, height_u: 3, wall: 1.2 }
+
 function App() {
   const [status, setStatus] = useState('starting...')
-  const [params, setParams] = useState({ grid_x: 1, grid_y: 1, height_u: 3, wall: 1.2 })
+  const [params, setParams] = useState(DEFAULT_PARAMS)
+  const [history, setHistory] = useState([{ ...DEFAULT_PARAMS, ts: Date.now() }])
+  const [historyIdx, setHistoryIdx] = useState(0)
+
   const canvasRef = useRef(null)
   const workerRef = useRef(null)
   const meshRef = useRef(null)
@@ -35,10 +40,7 @@ function App() {
 
     worker.onmessage = (e) => {
       const data = e.data
-      if (data.status === 'error') {
-        setStatus('ERROR: ' + data.message)
-        return
-      }
+      if (data.status === 'error') { setStatus('ERROR: ' + data.message); return }
       setStatus(data.status)
       if (data.status === 'mesh') {
         if (meshRef.current) {
@@ -48,13 +50,11 @@ function App() {
         const geometry = new THREE.BufferGeometry()
         geometry.setAttribute('position', new THREE.BufferAttribute(data.verts, 3))
         geometry.computeVertexNormals()
-        const material = new THREE.MeshStandardMaterial({ color: 0x4caf50, side: THREE.DoubleSide })
-        const mesh = new THREE.Mesh(geometry, material)
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x4caf50, side: THREE.DoubleSide }))
         scene.add(mesh)
         meshRef.current = mesh
       }
     }
-
     worker.onerror = (e) => setStatus('Worker error: ' + e.message)
 
     function animate() {
@@ -64,18 +64,33 @@ function App() {
     }
     animate()
 
-    return () => {
-      worker.terminate()
-      renderer.dispose()
+    return () => { worker.terminate(); renderer.dispose() }
+  }, [])
+
+  const buildWithParams = useCallback((p) => {
+    if (workerRef.current) {
+      workerRef.current.postMessage({ type: 'build', ...p })
     }
   }, [])
 
   const handleChange = (key, value) => {
     const newParams = { ...params, [key]: value }
     setParams(newParams)
-    if (workerRef.current) {
-      workerRef.current.postMessage({ type: 'build', ...newParams })
-    }
+    const newEntry = { ...newParams, ts: Date.now() }
+    setHistory(prev => {
+      const trimmed = prev.slice(0, historyIdx + 1)
+      const next = [...trimmed, newEntry]
+      setHistoryIdx(next.length - 1)
+      return next
+    })
+    buildWithParams(newParams)
+  }
+
+  const handleScrub = (idx) => {
+    setHistoryIdx(idx)
+    const snap = history[idx]
+    setParams(snap)
+    buildWithParams(snap)
   }
 
   const sliders = [
@@ -88,33 +103,47 @@ function App() {
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+
+      {/* Left panel */}
       <div style={{
         position: 'absolute', top: 0, left: 0, height: '100%',
-        width: '220px', background: 'rgba(0,0,0,0.7)',
+        width: '220px', background: 'rgba(0,0,0,0.75)',
         padding: '20px', boxSizing: 'border-box', color: 'white', fontFamily: 'monospace'
       }}>
-        <div style={{ marginBottom: '16px', fontSize: '14px', color: '#4caf50' }}>
-          MAKER AI — Design Front
-        </div>
-        <div style={{ marginBottom: '16px', fontSize: '12px', color: '#aaa' }}>
-          Status: {status}
-        </div>
+        <div style={{ marginBottom: '16px', fontSize: '14px', color: '#4caf50' }}>MAKER AI</div>
+        <div style={{ marginBottom: '16px', fontSize: '11px', color: '#aaa' }}>Status: {status}</div>
         {sliders.map(({ key, label, min, max, step }) => (
           <div key={key} style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '12px', marginBottom: '4px' }}>
               {label}: <span style={{ color: '#4caf50' }}>{params[key]}</span>
             </div>
-            <input
-              type="range" min={min} max={max} step={step}
+            <input type="range" min={min} max={max} step={step}
               value={params[key]}
               onChange={(e) => handleChange(key, parseFloat(e.target.value))}
-              style={{ width: '100%' }}
-            />
+              style={{ width: '100%' }} />
           </div>
         ))}
-        <div style={{ fontSize: '11px', color: '#666', marginTop: '20px' }}>
+        <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
           {params.grid_x}×{params.grid_y} grid<br />
           {params.grid_x * 42}×{params.grid_y * 42}×{params.height_u * 7}mm
+        </div>
+      </div>
+
+      {/* Timeline scrubber */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: '220px', right: 0,
+        background: 'rgba(0,0,0,0.75)', padding: '12px 20px',
+        color: 'white', fontFamily: 'monospace'
+      }}>
+        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>
+          Spec History — commit {historyIdx + 1} / {history.length}
+        </div>
+        <input type="range" min={0} max={history.length - 1} step={1}
+          value={historyIdx}
+          onChange={(e) => handleScrub(parseInt(e.target.value))}
+          style={{ width: '100%' }} />
+        <div style={{ fontSize: '10px', color: '#555', marginTop: '4px' }}>
+          {history[historyIdx] && `${history[historyIdx].grid_x}×${history[historyIdx].grid_y} | h:${history[historyIdx].height_u} | wall:${history[historyIdx].wall}mm`}
         </div>
       </div>
     </div>
