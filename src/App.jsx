@@ -9,6 +9,7 @@ function App() {
   const [params, setParams] = useState(DEFAULT_PARAMS)
   const [history, setHistory] = useState([{ ...DEFAULT_PARAMS, ts: Date.now() }])
   const [historyIdx, setHistoryIdx] = useState(0)
+  const [farmResponse, setFarmResponse] = useState(null)
 
   const canvasRef = useRef(null)
   const workerRef = useRef(null)
@@ -93,6 +94,40 @@ function App() {
     buildWithParams(snap)
   }
 
+  const sendToFarm = async () => {
+    setStatus('sending...')
+    setFarmResponse(null)
+    try {
+      const spec_id = `gridfinity-${params.grid_x}x${params.grid_y}x${params.height_u}`
+      const claimed_time = params.grid_x * params.grid_y * params.height_u * 600
+      const claimed_weight = params.grid_x * params.grid_y * params.height_u * 3.5
+
+      const formData = new FormData()
+      const fileRes = await fetch('/sliced_output.3mf')
+      const dummyBlob = await fileRes.blob()
+      
+      
+      formData.append('data', dummyBlob, 'design.3mf')
+      formData.append('spec_id', spec_id)
+      formData.append('spec_version', 'v0')
+      formData.append('material', 'PLA')
+      formData.append('qty', '1')
+      formData.append('machine_class', 'BambuA1')
+      formData.append('claimed_time_seconds', String(claimed_time))
+      formData.append('claimed_weight_grams', String(claimed_weight))
+
+      const res = await fetch('http://localhost:5678/webhook/farm-intake', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+      setFarmResponse(data)
+      setStatus(data.flagged_for_review ? '⚠️ flagged!' : '✅ sent!')
+    } catch (err) {
+      setStatus('Send failed: ' + err.message)
+    }
+  }
+
   const sliders = [
     { key: 'grid_x', label: 'Grid X', min: 1, max: 5, step: 1 },
     { key: 'grid_y', label: 'Grid Y', min: 1, max: 5, step: 1 },
@@ -108,7 +143,8 @@ function App() {
       <div style={{
         position: 'absolute', top: 0, left: 0, height: '100%',
         width: '220px', background: 'rgba(0,0,0,0.75)',
-        padding: '20px', boxSizing: 'border-box', color: 'white', fontFamily: 'monospace'
+        padding: '20px', boxSizing: 'border-box', color: 'white', fontFamily: 'monospace',
+        overflowY: 'auto'
       }}>
         <div style={{ marginBottom: '16px', fontSize: '14px', color: '#4caf50' }}>MAKER AI</div>
         <div style={{ marginBottom: '16px', fontSize: '11px', color: '#aaa' }}>Status: {status}</div>
@@ -127,6 +163,24 @@ function App() {
           {params.grid_x}×{params.grid_y} grid<br />
           {params.grid_x * 42}×{params.grid_y * 42}×{params.height_u * 7}mm
         </div>
+
+        <button onClick={sendToFarm} style={{
+          marginTop: '20px', width: '100%', padding: '10px',
+          background: '#4caf50', color: 'black', border: 'none',
+          fontFamily: 'monospace', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold'
+        }}>
+          🚀 Send to Farm
+        </button>
+
+        {farmResponse && (
+          <div style={{ marginTop: '12px', fontSize: '10px', color: '#aaa', lineHeight: '1.6' }}>
+            <div style={{ color: farmResponse.flagged_for_review ? '#ff9800' : '#4caf50' }}>
+              {farmResponse.flagged_for_review ? '⚠️ FLAGGED' : '✅ PASS'}
+            </div>
+            <div>time: {farmResponse.actual_time_seconds}s</div>
+            <div>weight: {farmResponse.actual_weight_grams}g</div>
+          </div>
+        )}
       </div>
 
       {/* Timeline scrubber */}
