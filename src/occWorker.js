@@ -18,12 +18,27 @@ function addHole(shape, params) {
     const w = currentParams.grid_x * 42;
     const depthY = currentParams.grid_y * 42;
     const h = currentParams.height_u * 7;
-    const ax = new oc.gp_Ax2_3(new oc.gp_Pnt_3(w/2, -5, h/2), new oc.gp_Dir_4(0, 1, 0));
-    const cyl = new oc.BRepPrimAPI_MakeCylinder_2(ax, r, depthY + 10).Shape();
-    const cut = new oc.BRepAlgoAPI_Cut_3(shape, cyl, new oc.Message_ProgressRange_1());
+
+    // Cylinder along Y axis through center of front face
+    const ax = new oc.gp_Ax2_3(
+      new oc.gp_Pnt_3(w/2, -5, h/2),
+      new oc.gp_Dir_4(0, 1, 0)
+    );
+    const cylMaker = new oc.BRepPrimAPI_MakeCylinder_3(ax, r, depthY + 10);
+    cylMaker.Build();
+    const cyl = cylMaker.Shape();
+
+    const cut = new oc.BRepAlgoAPI_Cut_1();
+    const args = new oc.TopTools_ListOfShape_1();
+    args.Append_1(shape);
+    const tools = new oc.TopTools_ListOfShape_1();
+    tools.Append_1(cyl);
+    cut.SetArguments(args);
+    cut.SetTools(tools);
     cut.Build();
+    console.log('cut IsDone:', cut.IsDone());
     if (cut.IsDone()) return cut.Shape();
-  } catch(e) { console.error('hole error', e) }
+  } catch(e) { console.error('hole error:', e.message) }
   return shape;
 }
 

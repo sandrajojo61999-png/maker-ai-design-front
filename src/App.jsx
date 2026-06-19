@@ -36,11 +36,11 @@ function App() {
     sceneRef.current = scene
 
     const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 480) / window.innerHeight, 0.1, 1000)
-    camera.position.set(100, 100, 100)
+    camera.position.set(80, -80, 60)
 
     const controls = new OrbitControls(camera, canvasRef.current)
-    controls.target.set(21, 21, 21)
-    camera.lookAt(21, 21, 21)
+    controls.target.set(21, 21, 10)
+    camera.lookAt(21, 21, 10)
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.8))
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.0)
