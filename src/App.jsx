@@ -16,6 +16,8 @@ function App() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null)
+  const pendingActionRef = useRef(null)
 
   const canvasRef = useRef(null)
   const workerRef = useRef(null)
@@ -165,7 +167,7 @@ function App() {
       const res = await fetch('http://localhost:5678/webhook/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, params })
+        body: JSON.stringify({ message: userMsg, params, pendingAction: pendingActionRef.current })
       })
       const text = await res.text()
       const data = JSON.parse(text.startsWith('=') ? text.slice(1) : text)
@@ -181,6 +183,17 @@ function App() {
           })
           return newParams
         })
+        setPendingAction(null)
+        pendingActionRef.current = null
+      } else if (data.type === 'ask_user' && data.askUser) {
+        setPendingAction(data.askUser.pendingAction)
+        pendingActionRef.current = data.askUser.pendingAction
+      } else if (data.type === 'add_feature') {
+        setPendingAction(null)
+        pendingActionRef.current = null
+      } else {
+        setPendingAction(null)
+        pendingActionRef.current = null
       }
       setChatMessages(prev => [...prev, { role: 'ai', content: data.message }])
     } catch(e) {
@@ -304,6 +317,18 @@ function App() {
             </div>
           ))}
           {chatLoading && <div style={{ color: '#aaa', fontSize: '12px' }}>thinking...</div>}
+          {pendingAction && !chatLoading && (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <button onClick={() => { setChatInput('yes'); setTimeout(sendChat, 50) }}
+                style={{ flex: 1, background: '#4caf50', color: 'black', border: 'none', padding: '8px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>
+                ✅ Confirm
+              </button>
+              <button onClick={() => { setChatInput('no'); setTimeout(sendChat, 50) }}
+                style={{ flex: 1, background: '#333', color: 'white', border: '1px solid #555', padding: '8px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>
+                ❌ Cancel
+              </button>
+            </div>
+          )}
         </div>
         <div style={{ padding: '12px', borderTop: '1px solid #333', display: 'flex', gap: '8px' }}>
           <input
