@@ -164,7 +164,7 @@ function App() {
     setChatMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setChatLoading(true)
     try {
-      const res = await fetch((import.meta.env.VITE_N8N_URL || 'http://localhost:5678') + '/webhook/ai-chat', {
+      const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
         body: JSON.stringify({ message: userMsg, params, pendingAction: pendingActionRef.current })
