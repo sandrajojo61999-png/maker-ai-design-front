@@ -29,13 +29,13 @@ function App() {
     workerRef.current = worker
 
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true })
-    renderer.setSize(window.innerWidth - 500, window.innerHeight)
+    renderer.setSize(window.innerWidth - 480, window.innerHeight)
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x0d0d0d)
     sceneRef.current = scene
 
-    const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 500) / window.innerHeight, 0.1, 1000)
+    const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 480) / window.innerHeight, 0.1, 1000)
     camera.position.set(100, 100, 100)
 
     const controls = new OrbitControls(camera, canvasRef.current)
@@ -204,7 +204,7 @@ function App() {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+      <canvas ref={canvasRef} style={{ position: 'absolute', left: '220px', right: '260px', top: 0, bottom: 0, width: 'calc(100vw - 480px)', height: '100vh', display: 'block' }} />
 
       <div style={{
         position: 'absolute', top: 0, left: 0, height: '100%',
@@ -288,7 +288,7 @@ function App() {
 
       {mode === 'gridfinity' && (
         <div style={{
-          position: 'absolute', bottom: 0, left: '220px', right: '280px',
+          position: 'absolute', bottom: 0, left: '220px', right: '260px',
           background: 'rgba(0,0,0,0.75)', padding: '12px 20px',
           color: 'white', fontFamily: 'monospace'
         }}>
@@ -306,7 +306,7 @@ function App() {
       )}
 
       {/* Chat Panel */}
-      <div style={{ position: 'absolute', top: 0, right: 0, width: '280px', height: '100%', background: 'rgba(0,0,0,0.80)', display: 'flex', flexDirection: 'column', fontFamily: 'monospace', color: 'white', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, width: '260px', height: '100%', background: 'rgba(0,0,0,0.80)', display: 'flex', flexDirection: 'column', fontFamily: 'monospace', color: 'white', zIndex: 10 }}>
         <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, color: '#00ff88', letterSpacing: '0.15em' }}>AI ASSISTANT</div>
           <div style={{ fontSize: '10px', color: '#333', marginTop: '2px' }}>natural language → geometry</div>
