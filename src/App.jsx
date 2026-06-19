@@ -191,6 +191,11 @@ function App() {
       } else if (data.type === 'add_feature') {
         setPendingAction(null)
         pendingActionRef.current = null
+        if (data.features && data.features.length > 0) {
+          data.features.forEach(feat => {
+            workerRef.current.postMessage({ type: 'feature', feature: feat })
+          })
+        }
       } else {
         setPendingAction(null)
         pendingActionRef.current = null
