@@ -10,7 +10,7 @@ function App() {
   const [mode, setMode] = useState('gridfinity')
   const [params, setParams] = useState(DEFAULT_PARAMS)
   const [vaseParams, setVaseParams] = useState(DEFAULT_VASE)
-  const [history, setHistory] = useState([{ ...DEFAULT_PARAMS, ts: Date.now() }])
+  const [history, setHistory] = useState([{ ...DEFAULT_PARAMS, ts: Date.now(), msg: 'initial' }])
   const [historyIdx, setHistoryIdx] = useState(0)
   const [farmResponse, setFarmResponse] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
@@ -87,7 +87,7 @@ function App() {
   const handleChange = (key, value) => {
     const newParams = { ...params, [key]: value }
     setParams(newParams)
-    const newEntry = { ...newParams, ts: Date.now() }
+    const newEntry = { ...newParams, ts: Date.now(), msg: '' }
     setHistory(prev => {
       const trimmed = prev.slice(0, historyIdx + 1)
       const next = [...trimmed, newEntry]
@@ -177,7 +177,7 @@ function App() {
           buildWithParams(newParams)
           setHistory(h => {
             const trimmed = h.slice(0, historyIdx + 1)
-            const next = [...trimmed, { ...newParams, ts: Date.now() }]
+            const next = [...trimmed, { ...newParams, ts: Date.now(), msg: userMsg }]
             setHistoryIdx(next.length - 1)
             return next
           })
@@ -288,7 +288,7 @@ function App() {
             onChange={(e) => handleScrub(parseInt(e.target.value))}
             style={{ width: '100%' }} />
           <div style={{ fontSize: '10px', color: '#555', marginTop: '4px' }}>
-            {history[historyIdx] && `${history[historyIdx].grid_x}×${history[historyIdx].grid_y} | h:${history[historyIdx].height_u} | wall:${history[historyIdx].wall}mm`}
+            {history[historyIdx] && <><span style={{color:'#aaa'}}>{history[historyIdx].grid_x}×{history[historyIdx].grid_y} | h:{history[historyIdx].height_u} | wall:{history[historyIdx].wall}mm</span>{history[historyIdx].msg && <span style={{color:'#4caf50',marginLeft:'8px',fontSize:'10px'}}>"{history[historyIdx].msg}"</span>}</>}
           </div>
         </div>
       )}
