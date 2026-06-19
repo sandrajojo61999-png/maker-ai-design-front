@@ -32,7 +32,7 @@ function App() {
     renderer.setSize(window.innerWidth - 500, window.innerHeight)
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x222222)
+    scene.background = new THREE.Color(0x0d0d0d)
     sceneRef.current = scene
 
     const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 500) / window.innerHeight, 0.1, 1000)
@@ -59,7 +59,7 @@ function App() {
         const geometry = new THREE.BufferGeometry()
         geometry.setAttribute('position', new THREE.BufferAttribute(data.verts, 3))
         geometry.computeVertexNormals()
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x4caf50, side: THREE.DoubleSide }))
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x00cc66, side: THREE.DoubleSide, roughness: 0.4, metalness: 0.1 }))
         sceneRef.current.add(mesh)
         meshRef.current = mesh
       }
@@ -208,19 +208,28 @@ function App() {
 
       <div style={{
         position: 'absolute', top: 0, left: 0, height: '100%',
-        width: '220px', background: 'rgba(0,0,0,0.75)',
-        padding: '20px', boxSizing: 'border-box', color: 'white', fontFamily: 'monospace',
-        overflowY: 'auto'
+        width: '220px', background: 'rgba(10,10,10,0.92)',
+        padding: '20px 16px', boxSizing: 'border-box', color: 'white',
+        fontFamily: "'Inter', sans-serif", overflowY: 'auto',
+        borderRight: '1px solid rgba(255,255,255,0.06)'
       }}>
-        <div style={{ marginBottom: '12px', fontSize: '14px', color: '#4caf50' }}>MAKER AI</div>
-        <div style={{ marginBottom: '12px', fontSize: '11px', color: '#aaa' }}>Status: {status}</div>
+        <div style={{ marginBottom: '4px', fontSize: '13px', fontWeight: 600, color: '#00ff88', letterSpacing: '0.15em' }}>MAKER AI</div>
+        <div style={{ marginBottom: '20px', fontSize: '10px', color: '#444', letterSpacing: '0.05em' }}>PARAMETRIC 3D DESIGN</div>
+        <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: status.includes('ERROR') ? '#ff4444' : '#00ff88', display: 'inline-block' }}></span>
+          <span style={{ fontSize: '10px', color: '#666', fontFamily: "'JetBrains Mono', monospace" }}>{status}</span>
+        </div>
 
         <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
           {['gridfinity', 'vase'].map(m => (
             <button key={m} onClick={() => handleModeSwitch(m)} style={{
-              flex: 1, padding: '6px 4px', fontSize: '11px', cursor: 'pointer',
-              background: mode === m ? '#4caf50' : '#333',
-              color: mode === m ? 'black' : 'white', border: 'none', fontFamily: 'monospace'
+              flex: 1, padding: '7px 4px', fontSize: '10px', cursor: 'pointer',
+              background: mode === m ? '#00ff88' : 'transparent',
+              color: mode === m ? '#000' : '#555',
+              border: mode === m ? 'none' : '1px solid #222',
+              fontFamily: "'Inter', sans-serif", fontWeight: 500,
+              letterSpacing: '0.05em', textTransform: 'uppercase',
+              transition: 'all 0.15s'
             }}>{m}</button>
           ))}
         </div>
@@ -228,8 +237,9 @@ function App() {
         {mode === 'gridfinity' && <>
           {gridSliders.map(({ key, label, min, max, step }) => (
             <div key={key} style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '12px', marginBottom: '4px' }}>
-                {label}: <span style={{ color: '#4caf50' }}>{params[key]}</span>
+              <div style={{ fontSize: '10px', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+                <span style={{ color: '#00ff88', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{params[key]}</span>
               </div>
               <input type="range" min={min} max={max} step={step}
                 value={params[key]}
@@ -242,9 +252,11 @@ function App() {
           </div>
           <button onClick={sendToFarm} style={{
             marginTop: '16px', width: '100%', padding: '10px',
-            background: '#4caf50', color: 'black', border: 'none',
-            fontFamily: 'monospace', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold'
-          }}>🚀 Send to Farm</button>
+            background: '#00ff88', color: '#000', border: 'none',
+            fontFamily: "'Inter', sans-serif", fontSize: '11px', cursor: 'pointer',
+            fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase',
+            transition: 'opacity 0.15s'
+          }}>⬆ Send to Farm</button>
           {farmResponse && (
             <div style={{ marginTop: '10px', fontSize: '10px', color: '#aaa', lineHeight: '1.6' }}>
               <div style={{ color: farmResponse.flagged_for_review ? '#ff9800' : '#4caf50' }}>
@@ -295,7 +307,10 @@ function App() {
 
       {/* Chat Panel */}
       <div style={{ position: 'absolute', top: 0, right: 0, width: '280px', height: '100%', background: 'rgba(0,0,0,0.80)', display: 'flex', flexDirection: 'column', fontFamily: 'monospace', color: 'white', zIndex: 10 }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #333', fontSize: '13px', color: '#4caf50' }}>🤖 AI Chat</div>
+        <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: '10px', fontWeight: 600, color: '#00ff88', letterSpacing: '0.15em' }}>AI ASSISTANT</div>
+          <div style={{ fontSize: '10px', color: '#333', marginTop: '2px' }}>natural language → geometry</div>
+        </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
           {chatMessages.length === 0 && (
             <div style={{ color: '#555', fontSize: '11px', lineHeight: '1.8' }}>
@@ -338,7 +353,7 @@ function App() {
             placeholder='Ask AI...'
             style={{ flex: 1, background: '#222', border: '1px solid #444', color: 'white', padding: '8px', fontFamily: 'monospace', fontSize: '12px' }}
           />
-          <button onClick={sendChat} style={{ background: '#4caf50', color: 'black', border: 'none', padding: '8px 12px', cursor: 'pointer', fontFamily: 'monospace' }}>Send</button>
+          <button onClick={sendChat} style={{ background: '#00ff88', color: '#000', border: 'none', padding: '8px 14px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '11px' }}>↑</button>
         </div>
       </div>
     </div>
