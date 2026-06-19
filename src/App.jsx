@@ -29,13 +29,13 @@ function App() {
     workerRef.current = worker
 
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true })
-    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setSize(window.innerWidth - 500, window.innerHeight)
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x222222)
     sceneRef.current = scene
 
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000)
+    const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 500) / window.innerHeight, 0.1, 1000)
     camera.position.set(100, 100, 100)
 
     const controls = new OrbitControls(camera, canvasRef.current)
@@ -134,7 +134,7 @@ function App() {
       formData.append('machine_class', 'BambuA1')
       formData.append('claimed_time_seconds', String(claimed_time))
       formData.append('claimed_weight_grams', String(claimed_weight))
-      const res = await fetch('http://localhost:5678/webhook/farm-intake', { method: 'POST', body: formData })
+      const res = await fetch((import.meta.env.VITE_N8N_URL || 'http://localhost:5678') + '/webhook/farm-intake', { method: 'POST', body: formData })
       const data = await res.json()
       setFarmResponse(data)
       setStatus(data.flagged_for_review ? '⚠️ flagged!' : '✅ sent!')
@@ -164,9 +164,9 @@ function App() {
     setChatMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setChatLoading(true)
     try {
-      const res = await fetch('http://localhost:5678/webhook/ai-chat', {
+      const res = await fetch((import.meta.env.VITE_N8N_URL || 'http://localhost:5678') + '/webhook/ai-chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
         body: JSON.stringify({ message: userMsg, params, pendingAction: pendingActionRef.current })
       })
       const text = await res.text()
@@ -203,7 +203,7 @@ function App() {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
       <div style={{
